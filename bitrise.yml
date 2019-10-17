@@ -14,19 +14,12 @@ app:
 workflows:
   test:
     steps:
-    - script:
-        inputs:
-        - content: |
-            #!/bin/bash
-            echo "Just an example 'secrets' print."
-            echo "The value of 'A_SECRET_PARAM' is: $A_SECRET_PARAM"
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         description: |-
-          To prevent step testing issues, like referencing relative
-          files with just './some-file' in the step's code, which would
-          work for testing the step from this directory directly
-          but would break if the step is included in another `bitrise.yml`.
+          In order to pass this test it should cd to some git repository.
+          If the repository commits contain line similar to `TEST-123`
+          it should pickup the ids.
         run_if: true
         inputs:
         - path: ./_tmp
@@ -35,8 +28,8 @@ workflows:
         title: Step Test
         run_if: true
         inputs:
-        - jira_project_name: GAS
-        - jira_url: https://leancode.atlassian.net
+        - jira_project_name: TEST
+        - jira_url: https://test.atlassian.net
         - jira_token: "$JIRA_TOKEN"
 
   # ----------------------------------------------------------------
