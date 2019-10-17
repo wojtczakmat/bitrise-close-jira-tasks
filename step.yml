@@ -65,7 +65,7 @@ toolkit:
 
 
 inputs:
-  - jira_project_name:
+  - jira_project_name: ""
     opts:
       title: "Jira Project name"
       summary: "Acronym used in Jira e.g. TEMP, GAS, TEST"
@@ -73,8 +73,7 @@ inputs:
         Description of this input.
       is_expand: true
       is_required: true
-      value_options: []
-  - jira_url:
+  - jira_url: ""
     opts:
       title: "Jira Project URL"
       summary: "Base URL to company Jira"
@@ -82,7 +81,6 @@ inputs:
         This can be e.g. https://company.atlassian.net
       is_expand: true
       is_required: true
-      value_options: []
   - jira_token: "$JIRA_TOKEN"
     opts:
       title: "Jira API token"
@@ -91,7 +89,6 @@ inputs:
         You should use secret environment variable
       is_expand: true
       is_required: true
-      value_options: []
   - from_status: "Deploying"
     opts:
       title: "Initial status"
@@ -100,7 +97,6 @@ inputs:
         Status of tasks which are closed by developer and are currently being dpeloyed (may be a column name in Jira)
       is_expand: true
       is_required: true
-      value_options: []
   - to_status: "Stabilization on QA"
     opts:
       title: "Initial status"
@@ -109,8 +105,7 @@ inputs:
         Status of tasks which were deployed successfully (may be a column name in Jira)
       is_expand: true
       is_required: true
-      value_options: []
-  - custom_jira_field:
+  - custom_jira_field: ""
     opts:
       title: "Custom field to update version number"
       summary: "Current version number will be set in this custom field of Jira issues"
@@ -118,13 +113,11 @@ inputs:
         This should be in format `customfield_xxxxx`
       is_expand: true
       is_required: false
-      value_options: []
   - version: "$BITRISE_BUILD_NUMBER"
     opts:
-      title: "Version to be placed in `custom_jira_field`"
+      title: "App version"
       summary: "Current version number will be set in `custom_jira_field` of Jira issues"
       description: |
         You should use Bitrise env variable
       is_expand: true
       is_required: false
-      value_options: []
