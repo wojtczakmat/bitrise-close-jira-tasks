@@ -1,18 +1,21 @@
-#
-# A couple of useful guides & docs:
-#
-# - Main Bitrise CLI docs: https://github.com/bitrise-io/bitrise/tree/master/_docs
-# - Step Development Guideline: https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md
-# - Bitrise.yml format spec: https://github.com/bitrise-io/bitrise/blob/master/_docs/bitrise-yml-format-spec.md
-# - Bitrise docs: http://devcenter.bitrise.io/
-# - Bitrise CLI guides: http://devcenter.bitrise.io/bitrise-cli/
-
 title: |-
   close-jira-tasks
 summary: |
-  Step moves Jira tasks from Deploying state to Stabilization on QA
+  Step moves Jira tasks from given initial state to target state if their ids are in git log
 description: |
-  Step searches for tasks/stories that are in Deploying state in git log (which is caused if magic keyword is used in Jira e.g. `Do`) and after successful build moves them to `Stabilization on QA` state.
+  Step searches Jira project for tasks that are in `from_status` (e.g. `Deploying`) state
+  and after successful build moves them to `to_status` (e.g. `Stabilization on QA`) state.
+
+  This is useful if you use smart commits in Jira, e.g. if your commit message
+  includes `TEST-123 #Do`.
+  This would cause the issue TEST-123 to transition according to `Do` keyword.
+
+  The step works for multiple issues mentioned in last 100 commits, so if
+  you finished multiple tasks it should move all of them to the `to_status` state
+  provided they are in `from_status` at the moment of execution.
+
+  The step can also add custom value to the custom field in the Jira issue e.g. version of the app.
+
 website: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks
 source_code_url: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks
 support_url: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks/issues
@@ -20,27 +23,6 @@ host_os_tags:
   - osx-10.10
   - ubuntu-16.04
 
-# If this step should be available only for certain project types
-# just uncomment this `project_type_tags` section and include all the
-# project types supported by the step. If the step can be used for all
-# project types then you can just remove this section.
-# If no `project_type_tags` specified (or specified as an empty array)
-# that means the step can be used for any project type.
-# You can find more information about project type tags in the Step Development Guideline:
-# https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md
-#
-# project_type_tags:
-#   - ios
-#   - macos
-#   - android
-#   - xamarin
-#   - react-native
-#   - cordova
-#   - ionic
-
-# Type tags are used for categorizing steps, for easier step discovery in Step Libraries.
-# You can find more information about type tags in the Step Development Guideline:
-# https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md
 type_tags:
   - utility
 
