@@ -17,7 +17,7 @@ description: |
 website: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks
 source_code_url: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks
 support_url: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks/issues
-published_at: 2019-10-17T17:06:40.808544+02:00
+published_at: 2019-10-17T17:08:00.474714+02:00
 source:
   git: https://github.com/orestesgaolin/bitrise-close-jira-tasks.git
   commit: 0388ec9069c55aefe74baeab8d312c2aaee2ca6e
