@@ -1,5 +1,4 @@
 #!/bin/bash
-set -ex
 
 if [ -z "$jira_project_name" ]; then
     echo "Jira Project Name is required."
@@ -25,6 +24,11 @@ length=${#jira_project_name}
 
 CLOSED_TASKS=$(git --no-pager log --pretty='format:%b' -n 100 | grep -oE "([A-Z]{$length}-[0-9]+)");
 
+if [ -z "$CLOSED_TASKS" ]; then
+    echo "No tasks to transition found in git log"
+    exit 0
+fi
+
 query=$(jq -n \
     --arg jql "project = $jira_project_name AND status = '$from_status'" \
     '{ jql: $jql, startAt: 0, maxResults: 20, fields: [ "id" ], fieldsByKeys: false }'
@@ -40,13 +44,13 @@ tasks_to_close=$(curl -s \
     "$jira_url/rest/api/2/search" | jq -r '.issues[].key'
 )
 
-echo "Tasks to close: $tasks_to_close"
+echo "Tasks to transition: $tasks_to_close"
 
 for task in ${tasks_to_close}
 do
     case "$CLOSED_TASKS" in
         *"$task"*)
-            echo "Closing $task"
+            echo "Transitioning $task"
             if [[ -n "$version" && -n "$custom_jira_field" ]]; then
                 echo "Setting version of $task to $version"
                     query=$(jq -n \
