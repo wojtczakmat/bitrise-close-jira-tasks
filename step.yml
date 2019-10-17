@@ -12,7 +12,7 @@ title: |-
 summary: |
   Step moves Jira tasks from Deploying state to Stabilization on QA
 description: |
-  Step searches for tasks/stories that are in Deploying state (which is caused if magic keyword is used in Jira e.g. #Do) and after successful build moves them to Stabilization on QA state.
+  Step searches for tasks/stories that are in Deploying state in git log (which is caused if magic keyword is used in Jira e.g. `Do`) and after successful build moves them to `Stabilization on QA` state.
 website: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks
 source_code_url: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks
 support_url: https://github.com/orestesgaolin/bitrise-step-close-jira-tasks/issues
@@ -53,6 +53,7 @@ deps:
   brew:
   - name: git
   - name: wget
+  - name: jq
   apt_get:
   - name: git
   - name: wget
@@ -64,24 +65,66 @@ toolkit:
 
 
 inputs:
-  - example_step_input: Default Value - you can leave this empty if you want to
+  - jira_project_name:
     opts:
-      title: "Example Step Input"
-      summary: Summary. No more than 2-3 sentences.
+      title: "Jira Project name"
+      summary: "Acronym used in Jira e.g. TEMP, GAS, TEST"
       description: |
         Description of this input.
-
-        Can be Markdown formatted text.
       is_expand: true
       is_required: true
       value_options: []
-
-outputs:
-  - EXAMPLE_STEP_OUTPUT:
+  - jira_url:
     opts:
-      title: "Example Step Output"
-      summary: Summary. No more than 2-3 sentences.
+      title: "Jira Project URL"
+      summary: "Base URL to company Jira"
       description: |
-        Description of this output.
-
-        Can be Markdown formatted text.
+        This can be e.g. https://company.atlassian.net
+      is_expand: true
+      is_required: true
+      value_options: []
+  - jira_token: "$JIRA_TOKEN"
+    opts:
+      title: "Jira API token"
+      summary: "Token used to authenticate to Jira"
+      description: |
+        You should use secret environment variable
+      is_expand: true
+      is_required: true
+      value_options: []
+  - from_status: "Deploying"
+    opts:
+      title: "Initial status"
+      summary: "Status of tasks which are closed by developer"
+      description: |
+        Status of tasks which are closed by developer and are currently being dpeloyed (may be a column name in Jira)
+      is_expand: true
+      is_required: true
+      value_options: []
+  - to_status: "Stabilization on QA"
+    opts:
+      title: "Initial status"
+      summary: "Status of tasks which were deployed successfully"
+      description: |
+        Status of tasks which were deployed successfully (may be a column name in Jira)
+      is_expand: true
+      is_required: true
+      value_options: []
+  - custom_jira_field:
+    opts:
+      title: "Custom field to update version number"
+      summary: "Current version number will be set in this custom field of Jira issues"
+      description: |
+        This should be in format `customfield_xxxxx`
+      is_expand: true
+      is_required: false
+      value_options: []
+  - version: "$BITRISE_BUILD_NUMBER"
+    opts:
+      title: "Version to be placed in `custom_jira_field`"
+      summary: "Current version number will be set in `custom_jira_field` of Jira issues"
+      description: |
+        You should use Bitrise env variable
+      is_expand: true
+      is_required: false
+      value_options: []

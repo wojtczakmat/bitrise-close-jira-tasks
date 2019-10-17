@@ -1,22 +1,92 @@
 #!/bin/bash
 set -ex
 
-echo "This is the value specified for the input 'example_step_input': ${example_step_input}"
+if [ -z "$jira_project_name" ]; then
+    echo "Jira Project Name is required."
+    usage
+fi
 
-#
-# --- Export Environment Variables for other Steps:
-# You can export Environment Variables for other Steps with
-#  envman, which is automatically installed by `bitrise setup`.
-# A very simple example:
-envman add --key EXAMPLE_STEP_OUTPUT --value 'the value you want to share'
-# Envman can handle piped inputs, which is useful if the text you want to
-# share is complex and you don't want to deal with proper bash escaping:
-#  cat file_with_complex_input | envman add --KEY EXAMPLE_STEP_OUTPUT
-# You can find more usage examples on envman's GitHub page
-#  at: https://github.com/bitrise-io/envman
+if [ -z "$jira_url" ]; then
+    echo "Jira Url is required."
+    usage
+fi
 
-#
-# --- Exit codes:
-# The exit code of your Step is very important. If you return
-#  with a 0 exit code `bitrise` will register your Step as "successful".
-# Any non zero exit code will be registered as "failed" by `bitrise`.
+if [ -z "$jira_token" ]; then
+    echo "Jira token is required."
+    usage
+fi
+
+if [ -z "$from_status" ]; then
+    echo "Status of tasks for deployment is required."
+    usage
+fi
+
+length=${#jira_project_name}
+
+CLOSED_TASKS=$(git --no-pager log --pretty='format:%b' -n 100 | grep -oE "([A-Z]{$length}-[0-9]+)");
+
+query=$(jq -n \
+    --arg jql "project = $jira_project_name AND status = '$from_status'" \
+    '{ jql: $jql, startAt: 0, maxResults: 20, fields: [ "id" ], fieldsByKeys: false }'
+);
+
+echo "Query to be executed in Jira: $query"
+
+tasks_to_close=$(curl -s \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Basic $jira_token" \
+    --request POST \
+    --data "$query" \
+    "$jira_url/rest/api/2/search" | jq -r '.issues[].key'
+)
+
+echo "Tasks to close: $tasks_to_close"
+
+for task in ${tasks_to_close}
+do
+    case "$CLOSED_TASKS" in
+        *"$task"*)
+            echo "Closing $task"
+            if [[ -n "$version" && -n "$custom_jira_field" ]]; then
+                echo "Setting version of $task to $version"
+                    query=$(jq -n \
+                        --arg version $version \
+                        "{ fields: { $custom_jira_field: [ \$version ] } }"
+                    );
+
+                curl \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Basic $jira_token" \
+                    --request PUT \
+                    --data "$query" \
+                    "$jira_url/rest/api/2/issue/$task"
+            fi
+
+            if [ -n "$to_status" ]; then
+                echo "Getting possible transitions for $task"
+
+                transition_id=$(curl -s \
+                    -H "Authorization: Basic $jira_token" \
+                    "$jira_url/rest/api/2/issue/$task/transitions" | \
+                    jq -r ".transitions[] | select( .to.name == \"$to_status\" ) | .id")
+
+                if [ -n "$transition_id" ]; then
+                    echo "Transitioning $task to $to_status"
+                    query=$(jq -n \
+                        --arg transition_id $transition_id \
+                        '{ transition: { id: $transition_id } }'
+                    );
+
+                    curl \
+                        -H "Content-Type: application/json" \
+                        -H "Authorization: Basic $jira_token" \
+                        --request POST \
+                        --data "$query" \
+                        "$jira_url/rest/api/2/issue/$task/transitions"
+                else
+                    echo "No matching transitions from status '$from_status' to '$to_status' for $task"
+                fi
+            fi
+            ;;
+    esac
+done
