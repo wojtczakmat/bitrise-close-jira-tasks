@@ -47,15 +47,15 @@ toolkit:
 inputs:
   - jira_project_name: ""
     opts:
-      title: "Jira Project name"
+      title: "Jira project name"
       summary: "Acronym used in Jira e.g. TEMP, GAS, TEST"
       description: |
-        Description of this input.
+        This will be used by script to determine tasks ids in git log e.g. TEST-123
       is_expand: true
       is_required: true
   - jira_url: ""
     opts:
-      title: "Jira Project URL"
+      title: "Jira project URL"
       summary: "Base URL to company Jira"
       description: |
         This can be e.g. https://company.atlassian.net
