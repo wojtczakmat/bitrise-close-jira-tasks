@@ -70,6 +70,7 @@ inputs:
         You should use secret environment variable
       is_expand: true
       is_required: true
+      is_sensitive: true
   - from_status: "Deploying"
     opts:
       title: "Initial status"
