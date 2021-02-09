@@ -33,17 +33,15 @@ run_if: ""
 
 deps:
   brew:
-  - name: git
-  - name: jq
+    - name: git
+    - name: jq
   apt_get:
-  - name: git
-  - name: jq
-
+    - name: git
+    - name: jq
 
 toolkit:
   bash:
     entry_file: step.sh
-
 
 inputs:
   - jira_project_name: ""
@@ -62,6 +60,15 @@ inputs:
         This can be e.g. https://company.atlassian.net
       is_expand: true
       is_required: true
+  - jira_username: "$JIRA_USERNAME"
+    opts:
+      title: "Jira username (email)"
+      summary: "Username used to authenticate to Jira"
+      description: |
+        You should use secret environment variable
+      is_expand: true
+      is_required: true
+      is_sensitive: true
   - jira_token: "$JIRA_TOKEN"
     opts:
       title: "Jira API token"

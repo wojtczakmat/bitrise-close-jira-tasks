@@ -15,18 +15,14 @@ if [ -z "$jira_token" ]; then
     usage
 fi
 
-if [ -z "$from_status" ]; then
-    echo "Status of tasks for deployment is required."
+if [ -z "$jira_username" ]; then
+    echo "Jira username (email) is required."
     usage
 fi
 
-length=${#jira_project_name}
-
-CLOSED_TASKS=$(git --no-pager log --pretty='format:%b' -n 100 | grep -oE "([A-Z]{$length}-[0-9]+)");
-
-if [ -z "$CLOSED_TASKS" ]; then
-    echo "No tasks to transition found in git log"
-    exit 0
+if [ -z "$from_status" ]; then
+    echo "Status of tasks for deployment is required."
+    usage
 fi
 
 query=$(jq -n \
@@ -36,9 +32,16 @@ query=$(jq -n \
 
 echo "Query to be executed in Jira: $query"
 
+echo $(curl -s \
+    -H "Content-Type: application/json" \
+    --user $jira_username:$jira_token \
+    --request POST \
+    --data "$query" \
+    "$jira_url/rest/api/2/search")
+
 tasks_to_close=$(curl -s \
     -H "Content-Type: application/json" \
-    -H "Authorization: Basic $jira_token" \
+    --user $jira_username:$jira_token \
     --request POST \
     --data "$query" \
     "$jira_url/rest/api/2/search" | jq -r '.issues[].key'
@@ -60,7 +63,7 @@ do
 
                 curl \
                     -H "Content-Type: application/json" \
-                    -H "Authorization: Basic $jira_token" \
+                    --user $jira_username:$jira_token \
                     --request PUT \
                     --data "$query" \
                     "$jira_url/rest/api/2/issue/$task"
@@ -70,7 +73,7 @@ do
                 echo "Getting possible transitions for $task"
 
                 transition_id=$(curl -s \
-                    -H "Authorization: Basic $jira_token" \
+                    --user $jira_username:$jira_token \
                     "$jira_url/rest/api/2/issue/$task/transitions" | \
                     jq -r ".transitions[] | select( .to.name == \"$to_status\" ) | .id")
 
@@ -83,7 +86,7 @@ do
 
                     curl \
                         -H "Content-Type: application/json" \
-                        -H "Authorization: Basic $jira_token" \
+                        --user $jira_username:$jira_token \
                         --request POST \
                         --data "$query" \
                         "$jira_url/rest/api/2/issue/$task/transitions"
