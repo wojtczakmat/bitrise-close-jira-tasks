@@ -32,13 +32,6 @@ query=$(jq -n \
 
 echo "Query to be executed in Jira: $query"
 
-echo $(curl -s \
-    -H "Content-Type: application/json" \
-    --user $jira_username:$jira_token \
-    --request POST \
-    --data "$query" \
-    "$jira_url/rest/api/2/search")
-
 tasks_to_close=$(curl -s \
     -H "Content-Type: application/json" \
     --user $jira_username:$jira_token \
@@ -51,49 +44,45 @@ echo "Tasks to transition: $tasks_to_close"
 
 for task in ${tasks_to_close}
 do
-    case "$CLOSED_TASKS" in
-        *"$task"*)
-            echo "Transitioning $task"
-            if [[ -n "$version" && -n "$custom_jira_field" ]]; then
-                echo "Setting version of $task to $version"
-                    query=$(jq -n \
-                        --arg version $version \
-                        "{ fields: { $custom_jira_field: [ \$version ] } }"
-                    );
+    echo "Transitioning $task"
+    if [[ -n "$version" && -n "$custom_jira_field" ]]; then
+        echo "Setting version of $task to $version"
+            query=$(jq -n \
+                --arg version $version \
+                "{ fields: { $custom_jira_field: [ \$version ] } }"
+            );
 
-                curl \
-                    -H "Content-Type: application/json" \
-                    --user $jira_username:$jira_token \
-                    --request PUT \
-                    --data "$query" \
-                    "$jira_url/rest/api/2/issue/$task"
-            fi
+        curl \
+            -H "Content-Type: application/json" \
+            --user $jira_username:$jira_token \
+            --request PUT \
+            --data "$query" \
+            "$jira_url/rest/api/2/issue/$task"
+    fi
 
-            if [ -n "$to_status" ]; then
-                echo "Getting possible transitions for $task"
+    if [ -n "$to_status" ]; then
+        echo "Getting possible transitions for $task"
 
-                transition_id=$(curl -s \
-                    --user $jira_username:$jira_token \
-                    "$jira_url/rest/api/2/issue/$task/transitions" | \
-                    jq -r ".transitions[] | select( .to.name == \"$to_status\" ) | .id")
+        transition_id=$(curl -s \
+            --user $jira_username:$jira_token \
+            "$jira_url/rest/api/2/issue/$task/transitions" | \
+            jq -r ".transitions[] | select( .to.name == \"$to_status\" ) | .id")
 
-                if [ -n "$transition_id" ]; then
-                    echo "Transitioning $task to $to_status"
-                    query=$(jq -n \
-                        --arg transition_id $transition_id \
-                        '{ transition: { id: $transition_id } }'
-                    );
+        if [ -n "$transition_id" ]; then
+            echo "Transitioning $task to $to_status"
+            query=$(jq -n \
+                --arg transition_id $transition_id \
+                '{ transition: { id: $transition_id } }'
+            );
 
-                    curl \
-                        -H "Content-Type: application/json" \
-                        --user $jira_username:$jira_token \
-                        --request POST \
-                        --data "$query" \
-                        "$jira_url/rest/api/2/issue/$task/transitions"
-                else
-                    echo "No matching transitions from status '$from_status' to '$to_status' for $task"
-                fi
-            fi
-            ;;
-    esac
+            curl \
+                -H "Content-Type: application/json" \
+                --user $jira_username:$jira_token \
+                --request POST \
+                --data "$query" \
+                "$jira_url/rest/api/2/issue/$task/transitions"
+        else
+            echo "No matching transitions from status '$from_status' to '$to_status' for $task"
+        fi
+    fi
 done
